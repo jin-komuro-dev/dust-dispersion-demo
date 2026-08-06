@@ -127,6 +127,68 @@ risk = clip(raw_risk, 0, 100)
 
 両者は180度反対の関係にあり、画面の矢印表示には必ず `downwind_to_deg` を使用する。
 
+## 8.1 「16方位+風速」形式の気象データからのU/V変換
+
+情シス側が扱う気象データが、GSM GPVのようなU/V成分ではなく
+**「16方位(例: `"ENE"`, `"N"`, `"SSW"`)+風速[m/s]」** の形式である場合、
+`src/dust_forecast/wind.py` の以下2つの関数を組み合わせて `compute_risk()` が
+要求するU/V成分[m/s]へ変換できる。
+
+```text
+16方位文字列 ──dir16_to_deg()──> 風向角度[度] ──uv_from_speed_dir()──> (U, V)[m/s] ──> compute_risk()
+                                  (+ 風速[m/s])
+```
+
+### `dir16_to_deg(direction) -> float | numpy.ndarray`
+
+`deg_to_dir16()` の逆変換。16方位の日本語名称(`"北北東"`等)または英字略号
+(`"NNE"`等)を、角度[度, 0-360)へ変換する。各方位の中心角は
+`インデックス * 22.5度`(`"N"`=0度, `"NNE"`=22.5度, ..., `"NNW"`=337.5度)。
+
+- スカラー文字列(`"ENE"`)・文字列のリストやNumPy配列(`["N","ENE"]`)の
+  どちらにも対応する。
+- 大文字/小文字(`"ene"`/`"ENE"`)、全角/半角(`"Ｅ"`/`"E"`)の表記ゆれは
+  `unicodedata.normalize("NFKC", ...)` により吸収する。
+- `"CALM"`/`"静穏"`等の無風マーカーは16方位の名称ではないため
+  `ValueError` を送出する。実データに無風マーカーが含まれる場合は、
+  本関数を呼ぶ前に呼出側で検出し、風速0として次の `uv_from_speed_dir()`
+  に渡すこと(風速0であれば角度の値によらずU=V=0になるため、角度は
+  任意の値でよい)。
+
+### `uv_from_speed_dir(wind_from_deg_value, speed_mps) -> (U, V)`
+
+`wind_from_deg()` の逆変換。風向角度[度](気象学的な、風が吹いてくる方向)と
+風速[m/s]から、10m風のU成分・V成分[m/s]を求める。8章の定義
+
+```text
+wind_from_deg = (degrees(atan2(-U, -V)) + 360) % 360
+```
+
+をUについて解いて導出しており、符号は以下の通り(スカラー・NumPy配列の
+両方に対応):
+
+```text
+U = -S * sin(radians(wind_from_deg))
+V = -S * cos(radians(wind_from_deg))
+```
+
+検算: `U=1, V=0` のとき `wind_from_deg=270度`。上式に270度とS=1を代入すると
+`U = -1*sin(270°) = -1*(-1) = 1`、`V = -1*cos(270°) = -1*0 = 0` となり、
+元のU,Vに一致する(`tests/test_wind.py` の往復変換テストで、
+`wind_from_deg()`⇔`uv_from_speed_dir()`、および `deg_to_dir16()`⇔`dir16_to_deg()`
+の双方向の整合性を検証している)。
+
+### 利用例
+
+```python
+from dust_forecast.wind import dir16_to_deg, uv_from_speed_dir
+
+deg = dir16_to_deg("ENE")           # 67.5
+u, v = uv_from_speed_dir(deg, 3.0)  # 風速3.0 m/s の場合のU, V
+
+# 以降は他の気象データ取得元(GSM GPV等)と同じくcompute_risk()へ渡せる
+```
+
 ## 9. 計算式バージョン
 
 `config.output.formula_version` で管理する(既定 `"1.0.0"`)。将来モデル式を変更した場合は
