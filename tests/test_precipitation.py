@@ -3,9 +3,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from dust_forecast.precipitation import hourly_from_accumulated, rain_factor
-
-BREAKPOINTS = [(0.1, 1.00), (1.0, 0.70), (3.0, 0.40), (float("inf"), 0.15)]
+from dust_forecast.precipitation import hourly_from_accumulated
 
 
 def _accum_da(values, start="2023-03-15T00:00:00"):
@@ -40,26 +38,3 @@ def test_hourly_from_accumulated_unsorted_input():
     da = xr.DataArray([2.0, 0.0, 1.0], dims=["step"], coords={"step": times})
     hourly = hourly_from_accumulated(da, time_dim="step").sortby("step")
     np.testing.assert_allclose(hourly.values[1:], [1.0, 1.0])
-
-
-@pytest.mark.parametrize(
-    "precip,expected",
-    [
-        (0.0, 1.00),
-        (0.05, 1.00),
-        (0.1, 0.70),  # 0.1 <= precip < 1.0
-        (0.99, 0.70),
-        (1.0, 0.40),  # 1.0 <= precip < 3.0
-        (2.99, 0.40),
-        (3.0, 0.15),  # >= 3.0
-        (10.0, 0.15),
-    ],
-)
-def test_rain_factor_breakpoints(precip, expected):
-    assert rain_factor(precip, BREAKPOINTS) == pytest.approx(expected)
-
-
-def test_rain_factor_more_rain_means_lower_factor():
-    """降水量が増えるほどリスク(降水係数)が低下する(仕様書11章 項目6)。"""
-    values = [rain_factor(p, BREAKPOINTS) for p in (0.0, 0.5, 2.0, 5.0)]
-    assert values == sorted(values, reverse=True)

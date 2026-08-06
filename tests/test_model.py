@@ -2,7 +2,9 @@ import numpy as np
 import pytest
 
 from dust_forecast.config import EmissionBase, MitigationFactor, ModelConfig, RainFactorBreakpoint
-from dust_forecast.model import compute_risk
+from dust_forecast.model import compute_risk, rain_factor
+
+RAIN_BREAKPOINTS = [(0.1, 1.00), (1.0, 0.70), (3.0, 0.40), (float("inf"), 0.15)]
 
 
 def _model_config(**overrides) -> ModelConfig:
@@ -102,3 +104,55 @@ def test_array_input_shapes_preserved():
     y = np.array([[20.0, 20.0], [40.0, 40.0]])
     result = compute_risk(x, y, 0.0, 5.0, 0.0, "medium", "none", cfg)
     assert result.risk.shape == x.shape
+
+
+@pytest.mark.parametrize(
+    "precip,expected",
+    [
+        (0.0, 1.00),
+        (0.05, 1.00),
+        (0.1, 0.70),  # 0.1 <= precip < 1.0
+        (0.99, 0.70),
+        (1.0, 0.40),  # 1.0 <= precip < 3.0
+        (2.99, 0.40),
+        (3.0, 0.15),  # >= 3.0
+        (10.0, 0.15),
+    ],
+)
+def test_rain_factor_breakpoints(precip, expected):
+    assert rain_factor(precip, RAIN_BREAKPOINTS) == pytest.approx(expected)
+
+
+def test_rain_factor_more_rain_means_lower_factor():
+    """降水量が増えるほどリスク(降水係数)が低下する(仕様書11章 項目6)。"""
+    values = [rain_factor(p, RAIN_BREAKPOINTS) for p in (0.0, 0.5, 2.0, 5.0)]
+    assert values == sorted(values, reverse=True)
+
+
+def test_rain_factor_nan_treated_as_no_rain():
+    assert rain_factor(float("nan"), RAIN_BREAKPOINTS) == pytest.approx(1.0)
+
+
+def test_model_module_has_no_grib_or_ui_imports():
+    """model.pyがGRIB読込(xarray/cfgrib/wgrib2/eccodes)やUI(streamlit)に
+    依存しないことを静的に検証する回帰テスト。社内システムへ計算ロジックのみを
+    切り出して再利用できることの保証。
+    """
+    import ast
+    import inspect
+
+    import dust_forecast.model as model_module
+
+    source = inspect.getsource(model_module)
+    tree = ast.parse(source)
+    imported_roots = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_roots.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported_roots.add(node.module.split(".")[0])
+
+    forbidden = {"xarray", "cfgrib", "eccodes", "pygrib", "streamlit", "wgrib2"}
+    assert not (imported_roots & forbidden), (
+        f"model.pyが禁止された依存を持っています: {imported_roots & forbidden}"
+    )

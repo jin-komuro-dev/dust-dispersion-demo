@@ -88,6 +88,14 @@ class BaseGribReader(abc.ABC):
 計算する。全ての係数は `config.model` から注入し、コード中に定数を埋め込まない。
 計算式の詳細は `docs/model_spec.md` を参照。
 
+`model.py` はGRIB2読込(xarray/cfgrib/wgrib2/eccodes)にもStreamlit UIにも
+依存しない純粋関数として独立している(依存は `config.py` と `wind.py` のみ)。
+`precipitation.py` はxarrayに依存するため、model.pyからはimportしない
+(降水係数`rain_factor()`はmodel.py側に置いている)。この独立性は
+`tests/test_model.py::test_model_module_has_no_grib_or_ui_imports` で
+静的に回帰検証している。他システムへ計算ロジックのみを切り出す場合の
+完全なAPI定義は `docs/model_spec.md` 第10章を参照。
+
 ## 7. 主要な設計判断 (ADR的記録)
 
 | 判断 | 理由 |

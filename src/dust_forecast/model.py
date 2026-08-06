@@ -4,6 +4,15 @@
 算出する説明可能な相対リスクモデルである。UIから独立させ、全係数はconfig経由で
 注入する(コードへ数値を埋め込まない)。
 
+**独立性についての注記**: `compute_risk()` はGRIB2読込(xarray/cfgrib/wgrib2)や
+Streamlit UIに一切依存しない。入力は風向風速・降水量・工事条件という単純な
+数値/文字列と `ModelConfig` のみであり、気象データの取得元(GSM GPV/他社製品/
+実測値のいずれか)を問わない。本モジュールは意図的に `dust_forecast.precipitation`
+(xarrayに依存する)をimportしない — `rain_factor()` は降水係数という
+モデル係数の一部であるため、GRIB由来の積算降水量差分処理(`precipitation.py`)
+とは切り離してここに置いている。詳細・入出力の完全な定義は
+`docs/model_spec.md` を参照。
+
 GSMの気象格子(0.1度x0.125度)はローカルメッシュ(10-20m)よりはるかに粗いため、
 現場地点で補間した風・降水量をローカルメッシュ全体に一様に与える。したがって
 本モジュールの入力 `u_mps`/`v_mps`/`hourly_precip_mm` は時刻ごとにスカラーであり、
@@ -16,8 +25,24 @@ from dataclasses import dataclass
 import numpy as np
 
 from dust_forecast.config import Intensity, ModelConfig, Watering
-from dust_forecast.precipitation import rain_factor
 from dust_forecast.wind import wind_speed
+
+
+def rain_factor(hourly_precip_mm: float, breakpoints: list[tuple[float, float]]) -> float:
+    """時間降水量[mm/h]から降水係数を求める(仕様書6.3節「降水係数」)。
+
+    `breakpoints` は `[(max_mm_h, factor), ...]` を `max_mm_h` の昇順で与える
+    (`ModelConfig.rain_factor_breakpoints` 由来)。時間降水量が `max_mm_h`
+    未満となる最初の要素の `factor` を返す。すべての `max_mm_h` を超える
+    場合は最後の要素の `factor` を返す。`hourly_precip_mm` がNaNの場合は
+    0mm/h(無降水)として扱う。xarray等の外部データ構造には依存しない。
+    """
+    if np.isnan(hourly_precip_mm):
+        hourly_precip_mm = 0.0
+    for max_mm_h, factor in breakpoints:
+        if hourly_precip_mm < max_mm_h:
+            return factor
+    return breakpoints[-1][1]
 
 
 @dataclass

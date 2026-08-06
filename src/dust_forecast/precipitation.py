@@ -63,18 +63,3 @@ def hourly_from_accumulated(accum: xr.DataArray, time_dim: str = "step") -> xr.D
     hourly.attrs["units"] = "mm/h"
     hourly.attrs["description"] = "隣接時刻の積算降水量の差分 (先頭時刻は基準無しのためNaN)"
     return hourly
-
-
-def rain_factor(hourly_precip_mm: float, breakpoints: list[tuple[float, float]]) -> float:
-    """時間降水量[mm/h]から降水係数を求める。
-
-    breakpoints: [(max_mm_h, factor), ...] を昇順で与える
-    (`config.model.rain_factor_breakpoints` 由来)。
-    最後の要素の `max_mm_h` を超える場合はその factor を採用する。
-    """
-    if np.isnan(hourly_precip_mm):
-        hourly_precip_mm = 0.0
-    for max_mm_h, factor in breakpoints:
-        if hourly_precip_mm < max_mm_h:
-            return factor
-    return breakpoints[-1][1]
