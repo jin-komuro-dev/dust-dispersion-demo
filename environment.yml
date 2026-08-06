@@ -1,0 +1,32 @@
+# conda環境の再現用ファイル。
+# 検証時点(Windows 11, Python 3.11.15)では、cfgrib/eccodes/netCDF4を含む
+# 主要パッケージはすべてpipで安定してインストールできることを確認済み。
+# conda-forgeのwin-64チャンネルにはeccodes/cfgribが提供されていないため
+# (docs/provenance.md参照)、Python本体のみconda管理とし、他はpipで揃える。
+#
+# 使用例:
+#   conda env create -f environment.yml
+#   conda activate dust-forecast
+name: dust-forecast
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - numpy
+      - pandas
+      - scipy
+      - xarray
+      - netCDF4
+      - matplotlib
+      - pyproj
+      - streamlit
+      - pydantic>=2
+      - pydantic-settings
+      - PyYAML
+      - pytest
+      - Pillow
+      - cfgrib
+      - eccodes

@@ -1,0 +1,18 @@
+# pipのみで環境を再現する場合の依存関係一覧。
+# 既存のconda環境(例: C:\conda-envs\py311)を使う場合は、
+# その環境のpythonで `pip install -r requirements.txt` を実行してください。
+numpy
+pandas
+scipy
+xarray
+netCDF4
+matplotlib
+pyproj
+streamlit
+pydantic>=2
+pydantic-settings
+PyYAML
+pytest
+Pillow
+cfgrib
+eccodes

@@ -4,3 +4,11 @@ __pycache__/
 outputs/
 .env
 *.egg-info/
+.pytest_cache/
+*.egg-info
+build/
+dist/
+.venv/
+*.nc
+*.idx
+.streamlit/

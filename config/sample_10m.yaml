@@ -1,0 +1,73 @@
+# dust_forecast サンプル設定ファイル(10mメッシュ版)
+# 200m x 200m を 10m x 10m メッシュで分割 -> 20x20=400セル
+# sample.yaml との差分は grid セクションのみ。
+
+site:
+  name: "テスト工事現場A"
+  latitude: 35.6812
+  longitude: 139.7671
+
+grid:
+  width_m: 200.0
+  height_m: 200.0
+  cell_size_x_m: 10.0
+  cell_size_y_m: 10.0
+  rotation_deg: 0.0
+  source_position_mode: offset_m
+  source_offset_x_m: -20.0
+  source_offset_y_m: -40.0
+  edge_policy: error
+  max_cells: 10000
+
+construction:
+  intensity: medium
+  work_start_jst: "09:00"
+  work_end_jst: "16:00"
+  watering: none
+
+grib:
+  input_path: null
+  reader_backend: cfgrib
+  wgrib2_exe: null
+  target_start_jst: "2023-03-15T09:00:00"
+  target_end_jst: "2023-03-15T16:00:00"
+  interpolation: bilinear
+
+model:
+  wind_start_mps: 0.5
+  wind_full_mps: 4.0
+  wind_max_factor: 1.2
+  sigma0_m: 8.0
+  spread_rate: 0.18
+  decay_base_m: 35.0
+  decay_per_ms: 18.0
+  upwind_background: 0.0
+  calm_threshold_mps: 0.3
+  eps: 1.0e-6
+  e_base:
+    small: 0.6
+    medium: 1.0
+    large: 1.5
+  rain_factor_breakpoints:
+    - {max_mm_h: 0.1, factor: 1.00}
+    - {max_mm_h: 1.0, factor: 0.70}
+    - {max_mm_h: 3.0, factor: 0.40}
+    - {max_mm_h: .inf, factor: 0.15}
+  mitigation_factor:
+    none: 1.00
+    normal: 0.60
+    strong: 0.35
+
+thresholds:
+  low_max: 25
+  moderate_max: 50
+  high_max: 75
+
+weather_display:
+  rain_mm_h: 1.0
+  light_rain_mm_h: 0.1
+  cloudy_cloud_pct: 80
+  partly_cloudy_cloud_pct: 50
+
+output:
+  formula_version: "1.0.0"
