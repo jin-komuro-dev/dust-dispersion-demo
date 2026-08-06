@@ -28,6 +28,7 @@ src/dust_forecast/
 ├─ model.py               # 相対飛散リスクモデル(物理量計算とは独立)
 ├─ categories.py          # しきい値による4段階色分け
 ├─ weather.py             # 簡易天気判定(第9節)
+├─ location_map.py        # 現場位置の簡易概略図(オフライン、外部地図データ不要)
 ├─ reports.py              # CSV/JSON出力(追跡可能性)
 ├─ plotting.py             # Matplotlib時刻別図・ダッシュボード図
 └─ cli.py                  # inspect-grib / generate コマンド

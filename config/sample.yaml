@@ -13,10 +13,10 @@ grid:
   cell_size_x_m: 20.0
   cell_size_y_m: 20.0
   rotation_deg: 0.0
-  # 作業現場位置: 表示範囲中央よりやや西南側 -> 中心からのオフセットで指定
+  # 作業現場位置: 表示範囲中央(オフセット0,0) -> 中心からのオフセットで指定
   source_position_mode: offset_m
-  source_offset_x_m: -20.0   # 東向き正。負値は西側
-  source_offset_y_m: -40.0   # 北向き正。負値は南側
+  source_offset_x_m: 0.0   # 東向き正。負値は西側
+  source_offset_y_m: 0.0   # 北向き正。負値は南側
   edge_policy: error         # 割り切れない場合: error/trim/pad
   max_cells: 10000
 

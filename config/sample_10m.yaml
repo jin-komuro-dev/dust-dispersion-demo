@@ -14,8 +14,8 @@ grid:
   cell_size_y_m: 10.0
   rotation_deg: 0.0
   source_position_mode: offset_m
-  source_offset_x_m: -20.0
-  source_offset_y_m: -40.0
+  source_offset_x_m: 0.0
+  source_offset_y_m: 0.0
   edge_policy: error
   max_cells: 10000
 

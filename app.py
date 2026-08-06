@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
@@ -21,6 +22,8 @@ from dust_forecast.config import (
     SiteConfig,
     load_config,
 )
+from dust_forecast.location_map import DISCLAIMER as LOCATION_MAP_DISCLAIMER
+from dust_forecast.location_map import plot_location_overview
 from dust_forecast.paths import CONFIG_DIR, DATA_INPUT_DIR, ensure_outputs_dir
 from dust_forecast.weather import DISCLAIMER as WEATHER_DISCLAIMER
 
@@ -91,6 +94,12 @@ def _sidebar_inputs(base: AppConfig) -> dict:
     site_name = st.sidebar.text_input("現場名", value=base.site.name)
     site_lat = st.sidebar.number_input("緯度", value=base.site.latitude, format="%.6f")
     site_lon = st.sidebar.number_input("経度", value=base.site.longitude, format="%.6f")
+
+    with st.sidebar.expander("現場位置(概略地図)", expanded=False):
+        location_fig = plot_location_overview(site_lat, site_lon, label=site_name or "現場")
+        st.pyplot(location_fig, use_container_width=True)
+        plt.close(location_fig)
+        st.caption(LOCATION_MAP_DISCLAIMER)
 
     st.sidebar.subheader("表示範囲・メッシュ")
     width_m = st.sidebar.number_input("表示範囲 幅 [m]", value=base.grid.width_m, min_value=1.0, step=10.0)
@@ -170,7 +179,7 @@ def main() -> None:
 
     st.subheader("対象時刻")
     labels = [f.valid_time_jst.strftime("%Y-%m-%d %H:%M JST") for f in frames]
-    selected_label = st.select_slider("表示時刻", options=labels, value=labels[-1])
+    selected_label = st.select_slider("表示時刻", options=labels, value=labels[0])
     selected_index = labels.index(selected_label)
     frame = frames[selected_index]
     valid_time_utc = frame.valid_time_utc
