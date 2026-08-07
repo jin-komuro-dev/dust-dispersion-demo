@@ -1,4 +1,5 @@
-@echo off
+﻿@echo off
+chcp 65001 >nul
 rem Streamlit画面を起動するバッチファイル。
 rem 事前に環境(conda activate dust-forecast 等)を有効化してから実行してください。
 setlocal

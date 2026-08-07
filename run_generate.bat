@@ -1,4 +1,5 @@
-@echo off
+﻿@echo off
+chcp 65001 >nul
 rem CLIバッチ処理(generate)を実行するバッチファイル。
 rem 事前に環境(conda activate dust-forecast 等)を有効化してから実行してください。
 rem 使用方法: run_generate.bat <GRIB2ファイルパス> [設定YAMLパス]

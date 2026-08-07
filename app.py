@@ -97,7 +97,7 @@ def _sidebar_inputs(base: AppConfig) -> dict:
 
     with st.sidebar.expander("現場位置(概略地図)", expanded=False):
         location_fig = plot_location_overview(site_lat, site_lon, label=site_name or "現場")
-        st.pyplot(location_fig, use_container_width=True)
+        st.pyplot(location_fig, width="stretch")
         plt.close(location_fig)
         st.caption(LOCATION_MAP_DISCLAIMER)
 
@@ -190,7 +190,7 @@ def main() -> None:
         st.markdown("### マップ表示")
         map_path = result.map_paths.get(valid_time_utc)
         if map_path and map_path.exists():
-            st.image(str(map_path), use_container_width=True)
+            st.image(str(map_path), width="stretch")
 
     with col_info:
         st.markdown("### 入力気象値(現場地点補間値)")
@@ -216,7 +216,7 @@ def main() -> None:
                 "最大リスク": round(max_risk, 1),
                 "区分": classify(max_risk, config.thresholds),
             })
-        st.dataframe(table_rows, hide_index=True, use_container_width=True)
+        st.dataframe(table_rows, hide_index=True, width="stretch")
 
     st.markdown("### 選択セルの中間計算値")
     cell_df = result.cell_dataframes[valid_time_utc]
@@ -224,7 +224,7 @@ def main() -> None:
     row_sel = c1.number_input("行(row)", min_value=0, max_value=result.grid.ny - 1, value=0, step=1)
     col_sel = c2.number_input("列(column)", min_value=0, max_value=result.grid.nx - 1, value=0, step=1)
     cell_row = cell_df[(cell_df["row"] == row_sel) & (cell_df["column"] == col_sel)]
-    st.dataframe(cell_row.T.rename(columns={cell_row.index[0]: "値"}) if not cell_row.empty else cell_row, use_container_width=True)
+    st.dataframe(cell_row.T.rename(columns={cell_row.index[0]: "値"}) if not cell_row.empty else cell_row, width="stretch")
 
     st.markdown("### 計算式・係数")
     with st.expander("相対飛散リスクモデルの係数(config.model)"):
